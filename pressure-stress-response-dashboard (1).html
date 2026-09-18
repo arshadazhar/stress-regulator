@@ -1,0 +1,937 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Pressure, Stress & Dominant Response Dashboard</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen', 'Ubuntu', 'Cantarell', sans-serif;
+            background: linear-gradient(135deg, #f5f3f0 0%, #faf8f6 100%);
+            color: #2c2c2a;
+            line-height: 1.6;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1000px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 16px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.07);
+            overflow: hidden;
+        }
+
+        .header {
+            text-align: center;
+            padding: 2rem 1.5rem 1.5rem;
+            background: linear-gradient(135deg, #f0e8df 0%, #faf8f6 100%);
+            border-bottom: 1px solid #e8e6e0;
+        }
+
+        .header h1 {
+            font-size: 28px;
+            font-weight: 500;
+            margin-bottom: 8px;
+            color: #2c2c2a;
+        }
+
+        .header p {
+            font-size: 13px;
+            color: #888780;
+            letter-spacing: 0.5px;
+        }
+
+        .tabs {
+            display: flex;
+            gap: 8px;
+            padding: 0 1.5rem;
+            border-bottom: 1px solid #e8e6e0;
+            background: white;
+            position: sticky;
+            top: 0;
+            z-index: 10;
+            flex-wrap: wrap;
+        }
+
+        .tab-button {
+            background: none;
+            border: none;
+            padding: 12px 16px;
+            font-size: 14px;
+            font-weight: 500;
+            cursor: pointer;
+            color: #888780;
+            transition: all 0.2s;
+            border-bottom: 2px solid transparent;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .tab-button.active {
+            color: #2c2c2a;
+            border-bottom-color: #c9a84c;
+        }
+
+        .tab-button:hover {
+            color: #5f5e5a;
+        }
+
+        .content {
+            padding: 2rem 1.5rem;
+            display: none;
+        }
+
+        .content.active {
+            display: block;
+            animation: fadeIn 0.3s ease;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .section-box {
+            background: white;
+            border: 1px solid #e8e6e0;
+            border-radius: 12px;
+            padding: 1.5rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .section-title {
+            font-size: 14px;
+            font-weight: 500;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            color: #888780;
+            margin-bottom: 12px;
+        }
+
+        .concept-card {
+            background: #f5f0e8;
+            border: 1px solid #e8e6e0;
+            border-radius: 8px;
+            padding: 1.25rem;
+            margin-bottom: 12px;
+            border-left: 4px solid #c9a84c;
+        }
+
+        .concept-title {
+            font-size: 15px;
+            font-weight: 600;
+            color: #2c2c2a;
+            margin-bottom: 8px;
+        }
+
+        .concept-text {
+            font-size: 13px;
+            color: #555550;
+            line-height: 1.7;
+        }
+
+        .pressure-meter {
+            margin-bottom: 1.5rem;
+        }
+
+        .meter-label {
+            font-size: 13px;
+            color: #888780;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-bottom: 12px;
+        }
+
+        .meter-display {
+            font-size: 48px;
+            font-weight: 500;
+            margin-bottom: 16px;
+            color: #c9a84c;
+        }
+
+        .meter-bar {
+            width: 100%;
+            height: 12px;
+            background: #e8e6e0;
+            border-radius: 6px;
+            overflow: hidden;
+            margin-bottom: 8px;
+        }
+
+        .meter-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #10b981 0%, #f59e0b 50%, #ef4444 100%);
+            transition: width 0.3s ease;
+        }
+
+        .meter-scale {
+            display: flex;
+            justify-content: space-between;
+            font-size: 11px;
+            color: #888780;
+        }
+
+        .pressure-sources {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+            gap: 12px;
+            margin-bottom: 1rem;
+        }
+
+        .source-card {
+            background: #f5f3f0;
+            border: 1px solid #e8e6e0;
+            border-radius: 8px;
+            padding: 1rem;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .source-card:hover {
+            border-color: #c9a84c;
+            background: #fffbf5;
+            transform: translateY(-2px);
+        }
+
+        .source-icon {
+            font-size: 24px;
+            margin-bottom: 6px;
+        }
+
+        .source-label {
+            font-size: 12px;
+            font-weight: 500;
+            color: #2c2c2a;
+        }
+
+        .response-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+            gap: 12px;
+        }
+
+        .response-card {
+            background: #f5f3f0;
+            border: 2px solid #e8e6e0;
+            border-radius: 8px;
+            padding: 1.25rem;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .response-card:hover {
+            border-color: #c9a84c;
+            transform: translateY(-2px);
+        }
+
+        .response-card.selected {
+            background: #fef5e8;
+            border-color: #c9a84c;
+            box-shadow: 0 4px 12px rgba(201, 168, 76, 0.15);
+        }
+
+        .response-emoji {
+            font-size: 32px;
+            margin-bottom: 8px;
+        }
+
+        .response-title {
+            font-size: 14px;
+            font-weight: 600;
+            color: #2c2c2a;
+            margin-bottom: 6px;
+        }
+
+        .response-desc {
+            font-size: 11px;
+            color: #888780;
+        }
+
+        .pattern-flow {
+            background: #f5f3f0;
+            border-radius: 8px;
+            padding: 1.5rem;
+            margin-bottom: 1.5rem;
+            text-align: center;
+        }
+
+        .flow-step {
+            display: inline-block;
+            background: white;
+            border: 1px solid #e8e6e0;
+            border-radius: 6px;
+            padding: 1rem 1.5rem;
+            margin: 0 8px 12px;
+            min-width: 120px;
+            font-weight: 500;
+            font-size: 13px;
+        }
+
+        .flow-arrow {
+            display: inline-block;
+            margin: 0 4px;
+            color: #c9a84c;
+            font-size: 20px;
+        }
+
+        .log-entry {
+            background: #f5f3f0;
+            border: 1px solid #e8e6e0;
+            border-radius: 8px;
+            padding: 1rem;
+            margin-bottom: 12px;
+        }
+
+        .log-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 8px;
+            flex-wrap: wrap;
+        }
+
+        .log-time {
+            font-size: 12px;
+            color: #888780;
+        }
+
+        .log-levels {
+            display: flex;
+            gap: 12px;
+            font-size: 12px;
+        }
+
+        .log-level {
+            display: flex;
+            align-items: center;
+            gap: 4px;
+        }
+
+        .log-level-dot {
+            display: inline-block;
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+        }
+
+        textarea {
+            width: 100%;
+            min-height: 80px;
+            padding: 12px;
+            border: 1px solid #d3d1c7;
+            border-radius: 8px;
+            font-size: 14px;
+            font-family: inherit;
+            resize: vertical;
+            color: #2c2c2a;
+        }
+
+        textarea::placeholder {
+            color: #b4b2a9;
+        }
+
+        textarea:focus {
+            outline: none;
+            border-color: #c9a84c;
+            box-shadow: 0 0 0 2px rgba(201, 168, 76, 0.1);
+        }
+
+        .btn {
+            padding: 10px 16px;
+            border: 1px solid #d3d1c7;
+            border-radius: 8px;
+            background: white;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 500;
+            transition: all 0.2s;
+            color: #2c2c2a;
+        }
+
+        .btn:hover {
+            border-color: #c9a84c;
+            color: #c9a84c;
+        }
+
+        .btn-primary {
+            background: #c9a84c;
+            color: white;
+            border-color: #c9a84c;
+        }
+
+        .btn-primary:hover {
+            background: #b59438;
+            border-color: #b59438;
+            color: white;
+        }
+
+        .stat-cards {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+            gap: 12px;
+            margin-bottom: 1.5rem;
+        }
+
+        .stat-card {
+            background: #f5f3f0;
+            border: 1px solid #e8e6e0;
+            border-radius: 8px;
+            padding: 1rem;
+            text-align: center;
+        }
+
+        .stat-label {
+            font-size: 12px;
+            color: #888780;
+            margin-bottom: 6px;
+        }
+
+        .stat-value {
+            font-size: 24px;
+            font-weight: 500;
+            color: #c9a84c;
+        }
+
+        .grid-2 {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 12px;
+        }
+
+        @media (max-width: 768px) {
+            .grid-2 {
+                grid-template-columns: 1fr;
+            }
+
+            .pressure-sources {
+                grid-template-columns: repeat(2, 1fr);
+            }
+
+            .response-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .intervention-box {
+            background: #fef5e8;
+            border: 2px solid #c9a84c;
+            border-radius: 8px;
+            padding: 1.25rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .intervention-title {
+            font-size: 15px;
+            font-weight: 600;
+            color: #2c2c2a;
+            margin-bottom: 8px;
+        }
+
+        .intervention-text {
+            font-size: 13px;
+            color: #555550;
+            line-height: 1.7;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>Pressure, Stress & Dominant Response</h1>
+            <p>Understand your stress patterns and break automatic responses.</p>
+        </div>
+
+        <div class="tabs">
+            <button class="tab-button active" data-tab="learn">
+                <i class="fas fa-book"></i> Learn
+            </button>
+            <button class="tab-button" data-tab="assess">
+                <i class="fas fa-heartbeat"></i> Assess
+            </button>
+            <button class="tab-button" data-tab="track">
+                <i class="fas fa-chart-line"></i> Track
+            </button>
+            <button class="tab-button" data-tab="intervene">
+                <i class="fas fa-shield-alt"></i> Intervene
+            </button>
+        </div>
+
+        <!-- LEARN TAB -->
+        <div id="learn" class="content active">
+            <div class="section-box">
+                <div class="section-title">The Three Concepts</div>
+                
+                <div class="concept-card">
+                    <div class="concept-title">🎯 Pressure</div>
+                    <div class="concept-text">
+                        The subjective experience of being squeezed between conflicting demands. Time pressure, expectations, competing goals, lack of control. <strong>Pressure is not stress.</strong> You can feel pressure and handle it. Pressure becomes stress when it exceeds your perceived capacity to cope.
+                    </div>
+                </div>
+
+                <div class="concept-card">
+                    <div class="concept-title">⚡ Stress</div>
+                    <div class="concept-text">
+                        Your body's nonspecific response to a demand or threat. When pressure activates your nervous system—cortisol rises, adrenaline spikes, heart rate increases, vision narrows. Acute stress can sharpen focus. Chronic stress damages health: weakened immune system, sleep disruption, anxiety, depression.
+                    </div>
+                </div>
+
+                <div class="concept-card">
+                    <div class="concept-title">🔄 Dominant Response</div>
+                    <div class="concept-text">
+                        Your most automatic, habitual reaction under stress. The Yerkes-Dodson Law: as stress rises, your brain narrows. You default to what you know best—usually Fight, Flight, Freeze, or Fawn. Your dominant response was adaptive once (it kept you safe). Now it often makes things worse.
+                    </div>
+                </div>
+            </div>
+
+            <div class="section-box">
+                <div class="section-title">How They Connect</div>
+                <div class="flow-step">Pressure</div>
+                <div class="flow-arrow">→</div>
+                <div class="flow-step">Stress Activated</div>
+                <div class="flow-arrow">→</div>
+                <div class="flow-step">Brain Narrows</div>
+                <br>
+                <div class="flow-arrow" style="display: block; margin: 8px 0;">↓</div>
+                <div class="flow-step">Dominant Response Fires</div>
+                <div class="flow-arrow">→</div>
+                <div class="flow-step">Problem Worsens</div>
+                <br>
+                <div class="flow-arrow" style="display: block; margin: 8px 0;">↓</div>
+                <div class="flow-step" style="background: #ffebee;">Loop Deepens</div>
+            </div>
+
+            <div class="section-box">
+                <div class="section-title">Common Dominant Responses</div>
+                <div class="response-grid">
+                    <div class="response-card">
+                        <div class="response-emoji">😤</div>
+                        <div class="response-title">Fight</div>
+                        <div class="response-desc">Aggression, arguing, pushing back, controlling</div>
+                    </div>
+                    <div class="response-card">
+                        <div class="response-emoji">🏃</div>
+                        <div class="response-title">Flight</div>
+                        <div class="response-desc">Avoidance, escape, distraction, running away</div>
+                    </div>
+                    <div class="response-card">
+                        <div class="response-emoji">🪨</div>
+                        <div class="response-title">Freeze</div>
+                        <div class="response-desc">Paralysis, shutdown, dissociation, numbness</div>
+                    </div>
+                    <div class="response-card">
+                        <div class="response-emoji">🤝</div>
+                        <div class="response-title">Fawn</div>
+                        <div class="response-desc">People-pleasing, over-explaining, appeasement</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ASSESS TAB -->
+        <div id="assess" class="content">
+            <div class="stat-cards">
+                <div class="stat-card">
+                    <div class="stat-label">Current Pressure</div>
+                    <div class="stat-value" id="pressureDisplay">5</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-label">Current Stress</div>
+                    <div class="stat-value" id="stressDisplay">5</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-label">Capacity Today</div>
+                    <div class="stat-value" id="capacityDisplay">5</div>
+                </div>
+            </div>
+
+            <div class="grid-2">
+                <div class="section-box">
+                    <div class="section-title">Pressure Level (1-10)</div>
+                    <div class="meter-label">How much pressure do you feel right now?</div>
+                    <input type="range" id="pressureSlider" min="1" max="10" value="5" style="width: 100%; margin-bottom: 12px;">
+                    <div class="meter-scale">
+                        <span>None</span>
+                        <span>Moderate</span>
+                        <span>Crushing</span>
+                    </div>
+                </div>
+
+                <div class="section-box">
+                    <div class="section-title">Stress Level (1-10)</div>
+                    <div class="meter-label">How stressed is your body right now?</div>
+                    <input type="range" id="stressSlider" min="1" max="10" value="5" style="width: 100%; margin-bottom: 12px;">
+                    <div class="meter-scale">
+                        <span>Calm</span>
+                        <span>Activated</span>
+                        <span>Overwhelmed</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="section-box">
+                <div class="section-title">What's Causing Pressure?</div>
+                <div class="pressure-sources" id="pressureSources"></div>
+                <div style="margin-top: 12px;">
+                    <input type="text" id="customPressure" placeholder="Add custom pressure source..." style="padding: 10px; border: 1px solid #d3d1c7; border-radius: 8px; width: 100%; margin-bottom: 8px;">
+                    <button class="btn btn-primary" onclick="addCustomPressure()" style="width: 100%;">Add</button>
+                </div>
+            </div>
+
+            <div class="section-box">
+                <div class="section-title">Your Dominant Response Right Now</div>
+                <div class="response-grid" id="responseGrid"></div>
+            </div>
+
+            <div class="section-box">
+                <div class="section-title">What's Happening?</div>
+                <textarea id="assessmentNote" placeholder="Describe the situation. What pressure are you facing? What's your body doing? What response are you noticing?"></textarea>
+                <button class="btn btn-primary" style="margin-top: 12px; width: 100%;" onclick="saveAssessment()">Save Assessment</button>
+            </div>
+        </div>
+
+        <!-- TRACK TAB -->
+        <div id="track" class="content">
+            <div class="section-box">
+                <div class="section-title">Your Pattern History</div>
+                <div id="logContainer"></div>
+            </div>
+
+            <div class="section-box">
+                <div class="section-title">Weekly Pattern</div>
+                <div id="patternAnalysis"></div>
+            </div>
+        </div>
+
+        <!-- INTERVENE TAB -->
+        <div id="intervene" class="content">
+            <div class="intervention-box">
+                <div class="intervention-title">⚡ When Pressure Builds (Before Stress Activates)</div>
+                <div class="intervention-text">
+                    <strong>The window to intervene.</strong> Early awareness is power. Notice the pressure before your nervous system floods.<br><br>
+                    <strong>Tools:</strong> Breathing, boundary-setting, asking for help, breaking tasks down, saying no.
+                </div>
+            </div>
+
+            <div class="intervention-box">
+                <div class="intervention-title">🔥 When Stress is Active (During the Reaction)</div>
+                <div class="intervention-text">
+                    Your brain is narrowed. You can't access wisdom. You need <strong>somatic tools</strong>—tools for your body, not your mind.<br><br>
+                    <strong>Tools:</strong> Cold water on face, movement, paced breathing, muscle relaxation, grounding (5-4-3-2-1).
+                </div>
+            </div>
+
+            <div class="intervention-box">
+                <div class="intervention-title">🔄 Breaking the Dominant Response Loop</div>
+                <div class="intervention-text">
+                    Your automatic response made sense once. Now it makes things worse. Breaking it requires:<br><br>
+                    1. <strong>Awareness:</strong> Notice the pattern (that's happening now)<br>
+                    2. <strong>Pause:</strong> Create space between stimulus and response<br>
+                    3. <strong>Choice:</strong> Practice a new response (even small differences help)<br>
+                    4. <strong>Repetition:</strong> New patterns build through practice
+                </div>
+            </div>
+
+            <div class="section-box">
+                <div class="section-title">Create Your Intervention Plan</div>
+                
+                <div style="margin-bottom: 1.5rem;">
+                    <div style="font-size: 13px; font-weight: 600; color: #2c2c2a; margin-bottom: 8px;">If my dominant response is...</div>
+                    <select id="responsePlanning" style="padding: 10px; border: 1px solid #d3d1c7; border-radius: 8px; width: 100%;">
+                        <option value="">Choose a response</option>
+                        <option value="fight">Fight (aggression, arguing)</option>
+                        <option value="flight">Flight (avoidance, escape)</option>
+                        <option value="freeze">Freeze (shutdown, paralysis)</option>
+                        <option value="fawn">Fawn (people-pleasing)</option>
+                    </select>
+                </div>
+
+                <div id="interventionPlan"></div>
+            </div>
+
+            <div class="section-box">
+                <div class="section-title">Practice New Responses</div>
+                <textarea id="newResponse" placeholder="What's ONE different response you'll practice this week? Be specific."></textarea>
+                <button class="btn btn-primary" style="margin-top: 12px; width: 100%;" onclick="saveNewResponse()">Commit to Practice</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Data
+        let pressureLevel = 5;
+        let stressLevel = 5;
+        let assessmentLog = [];
+        let selectedResponse = null;
+
+        const pressureSources = [
+            { label: 'Work/Career', icon: '💼' },
+            { label: 'Relationships', icon: '💔' },
+            { label: 'Health', icon: '🏥' },
+            { label: 'Money', icon: '💰' },
+            { label: 'Time', icon: '⏰' },
+            { label: 'Control', icon: '🎛️' }
+        ];
+
+        const responses = [
+            { name: 'Fight', emoji: '😤', desc: 'Aggression, arguing, controlling', color: '#ff6b6b' },
+            { name: 'Flight', emoji: '🏃', desc: 'Avoidance, escape, distraction', color: '#ffd93d' },
+            { name: 'Freeze', emoji: '🪨', desc: 'Shutdown, paralysis, numb', color: '#6bcf7f' },
+            { name: 'Fawn', emoji: '🤝', desc: 'People-pleasing, appeasement', color: '#4ecdc4' }
+        ];
+
+        const interventionPlans = {
+            fight: {
+                title: 'Interrupt Fight Response',
+                strategies: [
+                    'Take a 10-minute walk before responding',
+                    'Use "I" statements instead of accusations',
+                    'Name your anger: "I notice I\'m fighting"',
+                    'Take 3 deep breaths before speaking',
+                    'Ask: "Is this really about them, or about pressure?"'
+                ]
+            },
+            flight: {
+                title: 'Interrupt Flight Response',
+                strategies: [
+                    'Set a timer: "I\'ll face this for 10 minutes"',
+                    'Ground yourself: 5-4-3-2-1 sensory exercise',
+                    'Tell someone: "I want to run, but I\'m staying"',
+                    'Identify the fear: What are you actually afraid of?',
+                    'Practice: Stay 2 minutes longer than your urge to flee'
+                ]
+            },
+            freeze: {
+                title: 'Interrupt Freeze Response',
+                strategies: [
+                    'Move your body: Jump, shake, stretch, dance',
+                    'Cold water on face (activates nervous system)',
+                    'Hum or sing (sounds unfreeze the nervous system)',
+                    'Tell someone: "I\'m shutting down, I need support"',
+                    'Name what\'s happening: "I\'m freezing, and that\'s a survival response"'
+                ]
+            },
+            fawn: {
+                title: 'Interrupt Fawn Response',
+                strategies: [
+                    'Practice saying: "I need to think about that"',
+                    'Remember: Your needs matter as much as theirs',
+                    'Ask yourself: "What do I actually want?"',
+                    'Set one small boundary this week',
+                    'Notice the fear: What are you afraid will happen if you disagree?'
+                ]
+            }
+        };
+
+        // Initialize
+        function init() {
+            renderPressureSources();
+            renderResponses();
+            setUpSliders();
+            setUpTabSwitching();
+            document.getElementById('responsePlanning').addEventListener('change', updateInterventionPlan);
+        }
+
+        function setUpSliders() {
+            document.getElementById('pressureSlider').addEventListener('input', (e) => {
+                pressureLevel = parseInt(e.target.value);
+                updateMetrics();
+            });
+
+            document.getElementById('stressSlider').addEventListener('input', (e) => {
+                stressLevel = parseInt(e.target.value);
+                updateMetrics();
+            });
+        }
+
+        function updateMetrics() {
+            document.getElementById('pressureDisplay').textContent = pressureLevel;
+            document.getElementById('stressDisplay').textContent = stressLevel;
+            // Capacity = how much can you handle. If pressure > capacity = stress overload
+            let capacity = 10 - (pressureLevel - 5); // Example logic
+            capacity = Math.max(1, Math.min(10, capacity));
+            document.getElementById('capacityDisplay').textContent = capacity;
+        }
+
+        function renderPressureSources() {
+            const container = document.getElementById('pressureSources');
+            container.innerHTML = pressureSources.map(source => `
+                <div class="source-card" onclick="alert('Selected: ' + '${source.label}')">
+                    <div class="source-icon">${source.icon}</div>
+                    <div class="source-label">${source.label}</div>
+                </div>
+            `).join('');
+        }
+
+        function renderResponses() {
+            const container = document.getElementById('responseGrid');
+            container.innerHTML = responses.map(response => `
+                <div class="response-card" id="response-${response.name}" onclick="selectResponse('${response.name}')">
+                    <div class="response-emoji">${response.emoji}</div>
+                    <div class="response-title">${response.name}</div>
+                    <div class="response-desc">${response.desc}</div>
+                </div>
+            `).join('');
+        }
+
+        function selectResponse(name) {
+            selectedResponse = name;
+            document.querySelectorAll('.response-card').forEach(card => card.classList.remove('selected'));
+            document.getElementById(`response-${name}`).classList.add('selected');
+        }
+
+        function addCustomPressure() {
+            const input = document.getElementById('customPressure');
+            if (input.value.trim()) {
+                alert(`Added pressure source: "${input.value}"`);
+                input.value = '';
+            }
+        }
+
+        function saveAssessment() {
+            const note = document.getElementById('assessmentNote').value;
+            const entry = {
+                date: new Date().toLocaleString(),
+                pressure: pressureLevel,
+                stress: stressLevel,
+                response: selectedResponse || 'Not identified',
+                note: note
+            };
+            assessmentLog.unshift(entry);
+            document.getElementById('assessmentNote').value = '';
+            renderLog();
+            alert('Assessment saved. Pattern tracking updated.');
+        }
+
+        function renderLog() {
+            const container = document.getElementById('logContainer');
+            if (assessmentLog.length === 0) {
+                container.innerHTML = '<p style="color: #888780; text-align: center;">No assessments logged yet.</p>';
+                return;
+            }
+
+            container.innerHTML = assessmentLog.slice(0, 10).map(entry => `
+                <div class="log-entry">
+                    <div class="log-header">
+                        <span class="log-time">${entry.date}</span>
+                        <div class="log-levels">
+                            <div class="log-level">
+                                <div class="log-level-dot" style="background: #f59e0b;"></div>
+                                <span>Pressure: ${entry.pressure}</span>
+                            </div>
+                            <div class="log-level">
+                                <div class="log-level-dot" style="background: #ef4444;"></div>
+                                <span>Stress: ${entry.stress}</span>
+                            </div>
+                        </div>
+                    </div>
+                    <div style="font-size: 13px; color: #2c2c2a; margin-bottom: 6px;">Response: <strong>${entry.response}</strong></div>
+                    <div style="font-size: 13px; color: #555550;">${entry.note}</div>
+                </div>
+            `).join('');
+
+            renderPatternAnalysis();
+        }
+
+        function renderPatternAnalysis() {
+            const container = document.getElementById('patternAnalysis');
+            if (assessmentLog.length === 0) {
+                container.innerHTML = '<p style="color: #888780;">Log assessments to see patterns.</p>';
+                return;
+            }
+
+            const responses = {};
+            assessmentLog.forEach(entry => {
+                responses[entry.response] = (responses[entry.response] || 0) + 1;
+            });
+
+            const avgPressure = Math.round(assessmentLog.reduce((sum, e) => sum + e.pressure, 0) / assessmentLog.length);
+            const avgStress = Math.round(assessmentLog.reduce((sum, e) => sum + e.stress, 0) / assessmentLog.length);
+
+            container.innerHTML = `
+                <div style="margin-bottom: 1rem;">
+                    <p style="font-size: 13px; color: #888780; margin-bottom: 8px;">Average Pressure: <strong style="color: #c9a84c;">${avgPressure}/10</strong></p>
+                    <p style="font-size: 13px; color: #888780;">Average Stress: <strong style="color: #c9a84c;">${avgStress}/10</strong></p>
+                </div>
+                <div style="font-size: 13px;">
+                    <div style="color: #888780; margin-bottom: 8px;">Most Common Response:</div>
+                    ${Object.entries(responses).map(([resp, count]) => `
+                        <div style="margin-bottom: 6px; display: flex; align-items: center; gap: 8px;">
+                            <div style="background: #e8e6e0; height: 6px; border-radius: 3px; flex: 1; overflow: hidden;">
+                                <div style="background: #c9a84c; height: 100%; width: ${(count / assessmentLog.length) * 100}%"></div>
+                            </div>
+                            <span>${resp}: ${count}</span>
+                        </div>
+                    `).join('')}
+                </div>
+            `;
+        }
+
+        function updateInterventionPlan() {
+            const selected = document.getElementById('responsePlanning').value;
+            const container = document.getElementById('interventionPlan');
+
+            if (!selected) {
+                container.innerHTML = '';
+                return;
+            }
+
+            const plan = interventionPlans[selected];
+            container.innerHTML = `
+                <div style="font-size: 13px; color: #888780; margin-bottom: 8px;">${plan.title}</div>
+                <div style="display: flex; flex-direction: column; gap: 8px;">
+                    ${plan.strategies.map(strategy => `
+                        <div style="background: #fef5e8; border-left: 3px solid #c9a84c; padding: 10px; border-radius: 4px; font-size: 13px; color: #2c2c2a;">
+                            ✓ ${strategy}
+                        </div>
+                    `).join('')}
+                </div>
+            `;
+        }
+
+        function saveNewResponse() {
+            const newResp = document.getElementById('newResponse').value;
+            if (newResp.trim()) {
+                alert(`Practice committed: "${newResp}"\n\nRemember: New patterns build through repetition. Small steps matter.`);
+                document.getElementById('newResponse').value = '';
+            }
+        }
+
+        function setUpTabSwitching() {
+            document.querySelectorAll('.tab-button').forEach(btn => {
+                btn.addEventListener('click', () => {
+                    const tabName = btn.getAttribute('data-tab');
+                    switchTab(tabName);
+                });
+            });
+        }
+
+        function switchTab(tabName) {
+            document.querySelectorAll('.content').forEach(el => el.classList.remove('active'));
+            document.getElementById(tabName).classList.add('active');
+            
+            document.querySelectorAll('.tab-button').forEach(btn => btn.classList.remove('active'));
+            document.querySelector(`[data-tab="${tabName}"]`).classList.add('active');
+
+            if (tabName === 'track') {
+                renderLog();
+            }
+        }
+
+        // Start
+        init();
+        updateMetrics();
+    </script>
+<script type="module" src="https://static.cloudflareinsights.com/beacon.min.js/v31edd6df95cf4e85bb4c19e7a9bdbcba1788362987495" integrity="sha512-iIg7k2xntmwu6/uSb5tpc/hySgZc4eoL31yB29W6tJFo2akwjPWcEqnCEdJvGexCL0KEQwVYv5BlowfhVz26hg==" data-cf-beacon='{"version":"2024.11.0","token":"5070e21320304a1ba2b0a42ce9682840","spa":2}' crossorigin="anonymous"></script>
+</body>
+</html>
